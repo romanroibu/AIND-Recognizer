@@ -30,14 +30,19 @@ class ModelSelector(object):
 
     def select(self):
         raise NotImplementedError
+        
+    def base_model(self, num_states, X=None, lengths=None):
+        if not X:
+            X = self.X
+        if not lengths:
+            lengths = self.lengths
 
-    def base_model(self, num_states):
         # with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         # warnings.filterwarnings("ignore", category=RuntimeWarning)
         try:
             hmm_model = GaussianHMM(n_components=num_states, covariance_type="diag", n_iter=1000,
-                                    random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
+                                    random_state=self.random_state, verbose=False).fit(X, lengths)
             if self.verbose:
                 print("model created for {} with {} states".format(self.this_word, num_states))
             return hmm_model
