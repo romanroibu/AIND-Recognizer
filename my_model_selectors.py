@@ -30,6 +30,19 @@ class ModelSelector(object):
 
     def select(self):
         raise NotImplementedError
+
+    def log_likelihood(self, model, X=None, lengths=None):
+        if not X:
+            X = self.X
+        if not lengths:
+            lengths = self.lengths
+
+        try:
+            if model:
+                return model.score(self.X, self.lengths)
+        except:
+            pass
+        return None
         
     def base_model(self, num_states, X=None, lengths=None):
         if not X:
