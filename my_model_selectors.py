@@ -122,5 +122,34 @@ class SelectorCV(ModelSelector):
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection using CV
-        raise NotImplementedError
+        # DONE implement model selection using CV
+        split_method = KFold(n_splits=2, shuffle=False, random_state=None)
+
+        scores = dict()
+
+        for n in range(self.min_n_components, self.max_n_components):
+            scores[n] = []
+
+            if len(self.sequences) > 1:
+                indices = split_method.split(self.sequences)
+            else:
+                indices = [([0], [0])]
+
+            for cv_train_idx, cv_test_idx in indices:
+
+                train_X, train_lengths = combine_sequences(cv_train_idx, self.sequences)
+                test_X,  test_lengths  = combine_sequences(cv_test_idx,  self.sequences)
+
+                model = self.base_model(n, X=train_X, lengths: train_lengths)
+                logL  = self.log_likelihood(model, X=test_X, lengths=test_lengths)
+
+                if logL:
+                    scores[n].append(logL)
+                else:
+                    scores[n].append(float('inf'))
+
+        # Compute the average value for every n (number of states)
+        scores = { key: sum(values)/len(values) for (key, values) in scores.items() }
+
+        best_n = min(scores, key=scores.get)
+        return self.base_model(best_n)
