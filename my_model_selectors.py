@@ -127,9 +127,36 @@ class SelectorDIC(ModelSelector):
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection based on DIC scores
-        raise NotImplementedError
+        # DONE implement model selection based on DIC scores
 
+        def compute_logL(word, n_components):
+            model = self.base_model(n, X=X, lengths=lengths)
+            logL  = self.log_likelihood(model)
+            if not logL:
+                raise Exception("message")
+            return logL
+
+        scores = dict()
+
+        for n in range(self.min_n_components, self.max_n_components):
+
+            M = len(self.words)
+
+            this_word   = self.this_word
+            other_words = set(self.words.keys()).difference([this_word])
+
+            try:
+                this_word_logL   = compute_logL(this_word, n)
+                other_words_logL = [ compute_logL(word, n) for word in other_words ]
+
+                #DIC = log(P(X(i)) - 1/(M-1)SUM(log(P(X(all but i))
+                DIC = this_word_logL - 1/(M-1) * sum(other_words_logL)
+                scores[n] = DIC
+            except:
+                scores[n] = -float('inf')
+
+        best_n = max(scores, key=scores.get)
+        return self.base_model(best_n)
 
 class SelectorCV(ModelSelector):
     ''' select best model based on average log Likelihood of cross-validation folds
