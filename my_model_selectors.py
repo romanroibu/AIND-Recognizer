@@ -94,9 +94,26 @@ class SelectorBIC(ModelSelector):
         """
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection based on BIC scores
-        raise NotImplementedError
+        # DONE implement model selection based on BIC scores
+        scores = dict()
 
+        for n in range(self.min_n_components, self.max_n_components):
+            model = self.base_model(n)
+            logL  = self.log_likelihood(model)
+
+            if logL:
+                #https://discussions.udacity.com/t/understanding-better-model-selection/232987/4
+                #https://ai-nd.slack.com/archives/C4GQUB39T/p1489752754996239
+                p = n**2 + 2 * len(self.X[0]) * n - 1 #number of parameters
+                N = len(self.X) #number of data points
+                logN = math.log(N)
+                BIC = -2 * logL + p * logN
+                scores[n] = BIC
+            else:
+                scores[n] = float('inf')
+
+        best_n = min(scores, key=scores.get)
+        return self.base_model(best_n)
 
 class SelectorDIC(ModelSelector):
     ''' select best model based on Discriminative Information Criterion
